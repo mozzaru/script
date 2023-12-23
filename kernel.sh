@@ -48,59 +48,11 @@ rm -rf error.log
 MAIN_DIR="$(pwd)"
 
 # Devices
-if [ "$DEVICE_TYPE" == courbet  ];
-then
-DEVICE="XIAOMI 11 LITE (OSS)"
-KERNEL_NAME="PERF+_KERNEL-OSS"
-CODENAME="COURBET"
-
-DEFCONFIG="vendor/courbet_perf_defconfig"
-
-AnyKernel="https://github.com/itsshashanksp/AnyKernel3.git"
-AnyKernelbranch="courbet"
-fi
-
-if [ "$DEVICE_TYPE" == davinci  ];
-then
-DEVICE="REDMI K20 (OSS)"
-KERNEL_NAME="PERF+_KERNEL-OSS"
-CODENAME="DAVINCI"
-
-DEFCONFIG="vendor/davinci_perf_defconfig"
-
-AnyKernel="https://github.com/itsshashanksp/AnyKernel3.git"
-AnyKernelbranch="davinci"
-fi
-
-if [ "$DEVICE_TYPE" == phoenix  ];
-then
-DEVICE="REDMI K30 & POCO X2 (OSS)"
-KERNEL_NAME="PERF+_KERNEL-OSS"
-CODENAME="PHOENIX"
-
-DEFCONFIG="vendor/phoenix_perf_defconfig"
-
-AnyKernel="https://github.com/itsshashanksp/AnyKernel3.git"
-AnyKernelbranch="phoenix"
-fi
-
-if [ "$DEVICE_TYPE" == sweet  ];
-then
-DEVICE="REDMI NOTE 10 PRO (OSS)"
-KERNEL_NAME="PERF+_KERNEL-OSS"
-CODENAME="SWEET"
-
-DEFCONFIG="vendor/sweet_perf_defconfig"
-
-AnyKernel="https://github.com/itsshashanksp/AnyKernel3.git"
-AnyKernelbranch="master"
-fi
-
 if [ "$DEVICE_TYPE" == markw  ];
 then
 DEVICE="REDMI 4 PRIME"
-KERNEL_NAME="PROTOTYPE-4.9.337"
-CODENAME="MARKW"
+KERNEL_NAME="Prototype-v2"
+CODENAME="markw"
 
 DEFCONFIG="markw_defconfig"
 
@@ -111,8 +63,8 @@ fi
 # Kernel build release tag
 KRNL_REL_TAG="$KERNEL_TAG"
 
-HOSST="mozzaru"
-USEER="86"
+HOSST="show-bag"
+USEER="mozzaru"
 
 # setup telegram env
 export BOT_MSG_URL="https://api.telegram.org/bot$API_BOT/sendMessage"
@@ -146,26 +98,10 @@ tg_error() {
 
 # clang stuff
 		echo -e "$green << cloning clang >> \n $white"
-		wget https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+archive/refs/heads/main/clang-r498229b.tar.gz -O "aosp-clang.tar.gz"
-        mkdir "$MAIN_DIR"/clang-llvm && tar -xf aosp-clang.tar.gz -C "$MAIN_DIR"/clang-llvm && rm -rf aosp-clang.tar.gz 
-        mkdir gcc64
-        mkdir gcc32
-        git clone --depth=1 https://github.com/LineageOS/android_prebuilts_gcc_linux-x86_aarch64_aarch64-linux-android-4.9 -b lineage-19.1  gcc64
-        git clone --depth=1 https://github.com/LineageOS/android_prebuilts_gcc_linux-x86_arm_arm-linux-androideabi-4.9 -b lineage-19.1  gcc32
-          
-	    export PATH="$MAIN_DIR/clang-llvm/bin:$MAIN_DIR/gcc64/bin:$MAIN_DIR/gcc32/bin:$PATH"
-        export LD_LIBRARY_PATH="$MAIN_DIR/clang-llvm/lib:$LD_LIBRARY_PATH"
-        export KBUILD_COMPILER_STRING=$("$MAIN_DIR"/clang-llvm/bin/clang --version | head -n 1)
-            COMPILER=$KBUILD_COMPILER_STRING
-        export TZ ARCH DEVICE_DEFCONFIG \
-              PATH KBUILD_COMPILER_STRING
-	
-##------------------------------------------------------##
+		git clone --depth=1 https://gitlab.com/itsshashanksp/android_prebuilts_clang_host_linux-x86_clang-r498229b.git  "$HOME"/clang
 
-# Targets | Makefile
-make O=out ARCH=arm64 markw_defconfig
-
-##------------------------------------------------------##
+	export PATH="$HOME/clang/bin:$PATH"
+	export KBUILD_COMPILER_STRING=$("$HOME"/clang/bin/clang --version | head -n 1 | perl -pe 's/\(http.*?\)//gs' | sed -e 's/  */ /g' -e 's/[[:space:]]*$//')
 
 # Setup build process
 
@@ -190,6 +126,13 @@ Start=$(date +"%s")
 End=$(date +"%s")
 Diff=$(($End - $Start))
 }
+
+##------------------------------------------------------##
+
+# Targets | Makefile
+make O=out ARCH=arm64 markw_defconfig
+
+##------------------------------------------------------##
 
 # Let's start
 echo -e "$green << doing pre-compilation process >> \n $white"
@@ -241,7 +184,7 @@ export IMG="$PWD"/out/arch/arm64/boot/Image.gz
                 cd zip
                 export ZIP="$KERNEL_NAME"-"$KRNL_REL_TAG"-"$CODENAME"
                 zip -r9 "$ZIP" * -x .git README.md LICENSE *placeholder
-                curl -sLo zipsigner-3.0.jar https://raw.githubusercontent.com/mozzaru/anykernel/master/zipsigner-3.0.jar
+                curl -sLo zipsigner-3.0.jar https://github.com/mozzaru/anykernel/raw/master/zipsigner-3.0.jar
                 java -jar zipsigner-3.0.jar "$ZIP".zip "$ZIP"-signed.zip
                 tg_post_msg "Kernel successfully compiled uploading ZIP" "$CHATID"
                 tg_post_build "$ZIP"-signed.zip "$CHATID"
