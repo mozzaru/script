@@ -1,6 +1,8 @@
-*#!/bin/bash
+#!/bin/bash
 #
-# Copyright (C) 2020 Fox kernel project
+# Script For Building Android arm64 Kernel
+#
+# Copyright (C) 2021-2023 itsshashanksp <9945shashank@gmail.com>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -28,16 +30,7 @@ rm -rf out
 rm -rf zip
 rm -rf error.log
 
-echo -e "$green << setup dirs >> \n $white"
-
-# With that setup , the script will set dirs and few important thinks
-
-MY_DIR="${BASH_SOURCE%/*}"
-if [[ ! -d "$MY_DIR" ]]; then MY_DIR="$PWD"; fi
-
 # Now u can chose which things need to be modified
-# CHATID = chatid of a telegram group/channel
-# API_BOT = api bot of a telegram bot
 #
 # DEVICE = your device codename
 # KERNEL_NAME = the name of ur kranul
@@ -50,17 +43,61 @@ if [[ ! -d "$MY_DIR" ]]; then MY_DIR="$PWD"; fi
 # HOSST = build host
 # USEER = build user
 #
-# TOOLCHAIN = the toolchain u want to use "gcc/clang"
-
-# CHATID="5662490629"
-# API_BOT="5862606583:AAGDNDgElCTi2i74XNayUsAOKjt3Bl7njGc"
 
 # Devices
+if [ "$DEVICE_TYPE" == courbet  ];
+then
+DEVICE="XIAOMI 11 LITE (OSS)"
+KERNEL_NAME="PERF+_KERNEL-OSS"
+CODENAME="COURBET"
+
+DEFCONFIG="vendor/courbet_perf_defconfig"
+
+AnyKernel="https://github.com/itsshashanksp/AnyKernel3.git"
+AnyKernelbranch="courbet"
+fi
+
+if [ "$DEVICE_TYPE" == davinci  ];
+then
+DEVICE="REDMI K20 (OSS)"
+KERNEL_NAME="PERF+_KERNEL-OSS"
+CODENAME="DAVINCI"
+
+DEFCONFIG="vendor/davinci_perf_defconfig"
+
+AnyKernel="https://github.com/itsshashanksp/AnyKernel3.git"
+AnyKernelbranch="davinci"
+fi
+
+if [ "$DEVICE_TYPE" == phoenix  ];
+then
+DEVICE="REDMI K30 & POCO X2 (OSS)"
+KERNEL_NAME="PERF+_KERNEL-OSS"
+CODENAME="PHOENIX"
+
+DEFCONFIG="vendor/phoenix_perf_defconfig"
+
+AnyKernel="https://github.com/itsshashanksp/AnyKernel3.git"
+AnyKernelbranch="phoenix"
+fi
+
+if [ "$DEVICE_TYPE" == sweet  ];
+then
+DEVICE="REDMI NOTE 10 PRO (OSS)"
+KERNEL_NAME="PERF+_KERNEL-OSS"
+CODENAME="SWEET"
+
+DEFCONFIG="vendor/sweet_perf_defconfig"
+
+AnyKernel="https://github.com/itsshashanksp/AnyKernel3.git"
+AnyKernelbranch="master"
+fi
+
 if [ "$DEVICE_TYPE" == markw  ];
 then
 DEVICE="Redmi 4 Prime"
-CODENAME="markw"
 KERNEL_NAME="Prototype-v2"
+CODENAME="markw"
 
 DEFCONFIG="markw_defconfig"
 
@@ -68,13 +105,11 @@ AnyKernel="https://github.com/mozzaru/anykernel.git"
 AnyKernelbranch="master"
 fi
 
-HOSST="Show Buildbot"
-USEER="mozzaru"
-
-TOOLCHAIN="clang"
-
 # Kernel build release tag
 KRNL_REL_TAG="$KERNEL_TAG"
+
+HOSST="show-bag"
+USEER="mozzaru"
 
 # setup telegram env
 export BOT_MSG_URL="https://api.telegram.org/bot$API_BOT/sendMessage"
@@ -106,39 +141,20 @@ tg_error() {
         -F caption="$3Failed to build , check <code>error.log</code>"
 }
 
-# Now let's clone gcc/clang on HOME dir
-# And after that , the script start the compilation of the kernel it self
-# For regen the defconfig . use the regen.sh script
-
-if [ "$TOOLCHAIN" == gcc ]; then
-	if [ ! -d "$HOME/gcc64" ] && [ ! -d "$HOME/gcc32" ]
-	then
-		echo -e "$green << cloning gcc from arter >> \n $white"
-		git clone --depth=1 https://github.com/mvaisakh/gcc-arm64 "$HOME"/gcc64
-		git clone --depth=1 https://github.com/mvaisakh/gcc-arm "$HOME"/gcc32
-	fi
-	export PATH="$HOME/gcc64/bin:$HOME/gcc32/bin:$PATH"
-	export STRIP="$HOME/gcc64/aarch64-elf/bin/strip"
-	export KBUILD_COMPILER_STRING=$("$HOME"/gcc64/bin/aarch64-elf-gcc --version | head -n 1)
-elif [ "$TOOLCHAIN" == clang ]; then
-	if [ ! -d "$HOME/weebx_clang" ]
-	then
+# clang stuff
 		echo -e "$green << cloning weebx clang 17 >> \n $white"
 		wget "$(curl -s https://raw.githubusercontent.com/XSans0/WeebX-Clang/main/release/17.x/link.txt)" -O "weebx-clang.tar.gz"
-         mkdir "$HOME"/weebx_clang && tar -xf weebx-clang.tar.gz -C "$HOME"/weebx_clang --strip-components=1 && rm -f weebx-clang.tar.gz "$HOME"/weebx_clang
-	fi
-	export PATH="$HOME/weebx_clang/bin:$PATH"
-	export STRIP="$HOME/weebx_clang/aarch64-linux-gnu/bin/strip"
-	export KBUILD_COMPILER_STRING=$("$HOME"/weebx_clang/bin/clang --version | head -n 1 | perl -pe 's/\(http.*?\)//gs' | sed -e 's/  */ /g' -e 's/[[:space:]]*$//')
-fi
+        mkdir "$HOME"/weebx_clang && tar -xf weebx-clang.tar.gz -C "$HOME"/weebx_clang --strip-components=1 && rm -f weebx-clang.tar.gz "$HOME"/weebx_clang
+         
+	   export PATH="$HOME/weebx_clang/bin:$PATH"
+	   export STRIP="$HOME/weebx_clang/aarch64-linux-gnu/bin/strip"
+	   export KBUILD_COMPILER_STRING=$("$HOME"/weebx_clang/bin/clang --version | head -n 1 | perl -pe 's/\(http.*?\)//gs' | sed -e 's/  */ /g' -e 's/[[:space:]]*$//')
 
 # Setup build process
 
 build_kernel() {
 Start=$(date +"%s")
 
-if [ "$TOOLCHAIN" == clang  ]; then
-	echo clang
 	make -j$(nproc --all) O=out \
                               ARCH=arm64 \
 	                      CC="ccache clang" \
