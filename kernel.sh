@@ -142,11 +142,11 @@ tg_error() {
 }
 
 # clang stuff
-		echo -e "$green << cloning weebx clang 17 >> \n $white"
-	wget "$(curl -s https://raw.githubusercontent.com/XSans0/WeebX-Clang/main/release/17.x/link.txt)" -O "weebx-clang.tar.gz"
-    mkdir "$HOME"/clang && tar -xf weebx-clang.tar.gz -C "$HOME"/clang --strip-components=1 && rm -f weebx-clang.tar.gz "$HOME"/clang
+	echo -e "$green << cloning aosp 17 >> \n $white"
+	git clone --depth=1 https://gitlab.com/GhostMaster69-dev/cosmic-clang.git -b release/17.x "$HOME"/clang
 
 	export PATH="$HOME/clang/bin:$PATH"
+	export LD_LIBRARY_PATH="$HOME/clang/lib:$LD_LIBRARY_PATH"
 	export STRIP="$HOME/clang/aarch64-linux-gnu/bin/strip"
 	export KBUILD_COMPILER_STRING=$("$HOME"/clang/bin/clang --version | head -n 1 | perl -pe 's/\(http.*?\)//gs' | sed -e 's/  */ /g' -e 's/[[:space:]]*$//')
 
@@ -220,8 +220,9 @@ export IMG="$MY_DIR"/out/arch/arm64/boot/Image.gz-dtb
                 mv Image.gz-dtb zImage
                 export ZIP="$KERNEL_NAME"-"$KRNL_REL_TAG"-"$CODENAME"
                 zip -r9 "$ZIP" * -x .git README.md LICENSE *placeholder
-                curl -sLo zipsigner-3.0.jar https://gitlab.com/itsshashanksp/zipsigner/-/raw/master/bin/zipsigner-3.0-dexed.jar
+                curl -sLo zipsigner-3.0.jar https://raw.githubusercontent.com/mozzaru/anykernel/master/zipsigner-3.0.jar
                 java -jar zipsigner-3.0.jar "$ZIP".zip "$ZIP"-signed.zip
+                tg_post_msg "<b>=============================</b> %0A <b>× Prototype For Redmi 4 Prime ×</b> %0A <b>=============================</b> %0A%0A <b>Date : </b> <code>$(TZ=Indonesia/Jakarta date)</code> %0A%0A <b>Device Code Name:</b> <code>$CODENAME</code> %0A%0A <b>Kernel Version :</b> <code>$KERVER</code> %0A%0A <b>Developer:</b> @mozzaru86 %0A%0A <b> COMPILER :</b> <code>$COMPILER</code> <b> LAST COMMIT :</b> <code>$(git log --pretty=format:'%s' -1)</code> %0A%0A <b>Channel:</b> t.me/Cooking_kernel_bot %0A%0A <b>Changelog:</b> %0A https://github.com/mozzaru/android_kernel_xiaomi_markw_new/commits/master %0A%0A #prototype #markw" "$CHATID"
                 tg_post_msg "Kernel successfully compiled uploading ZIP" "$CHATID"
                 tg_post_build "$ZIP"-signed.zip "$CHATID"
                 tg_post_msg "done" "$CHATID"
